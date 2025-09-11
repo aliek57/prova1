@@ -1,15 +1,11 @@
 class Parcela {
-  int numeroParcela;
-  double valorParcela;
-  double juros;
-  double dividaRestante;
-  DateTime dataVencimento;
+  int? numeroParcela;
+  double? valorParcela;
+  double? juros;
+  double? totalParcela;
+  DateTime? dataVencimento;
 
-  Parcela({
-    required this.numeroParcela,
-    required this.valorParcela,
-    required this.juros,
-    required this.dividaRestante,
-    required this.dataVencimento,
+  Parcela({ this.numeroParcela, this.valorParcela, this.juros,
+            this.totalParcela, this.dataVencimento,
   });
 }

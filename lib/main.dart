@@ -34,6 +34,7 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController entradaController = TextEditingController();
   TextEditingController jurosController = TextEditingController();
   TextEditingController parcelasController = TextEditingController();
+  TextEditingController dataController = TextEditingController();
   DateTime? dataVencimento;
   List<Parcela> parcelas = [];
 
@@ -47,6 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (data_escolhida != null && data_escolhida != dataVencimento) {
       setState(() {
         dataVencimento = data_escolhida;
+        dataController.text = "${dataVencimento!.day.toString().padLeft(2, '0')}/${dataVencimento!.month.toString().padLeft(2, '0')}/${dataVencimento!.year}";
       });
     }
   }
@@ -59,16 +61,15 @@ class _MyHomePageState extends State<MyHomePage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Parcela nº ${p.numeroParcela} vence em ${p.dataVencimento.day.toString().padLeft(2, '0')}/${p.dataVencimento.month.toString().padLeft(2, '0')}/${p.dataVencimento.year}",
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            "Parcela nº ${p.numeroParcela} vence em ${p.dataVencimento!.day.toString().padLeft(2, '0')}/${p.dataVencimento!.month.toString().padLeft(2, '0')}/${p.dataVencimento!.year}",
           ),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Parcela: R\$ ${p.valorParcela.toStringAsFixed(2)}"),
-              Text("Juros: R\$ ${p.juros.toStringAsFixed(2)}"),
-              Text("Total: R\$ ${p.dividaRestante.toStringAsFixed(2)}"),
+              Text("Parcela: R\$ ${p.valorParcela!.toStringAsFixed(2)}"),
+              Text("Juros: R\$ ${p.juros!.toStringAsFixed(2)}"),
+              Text("Total: R\$ ${p.totalParcela!.toStringAsFixed(2)}"),
             ],
           ),
         ],
@@ -91,6 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
       entradaController.clear();
       jurosController.clear();
       parcelasController.clear();
+      dataController.clear();
       dataVencimento = null;
       parcelas = [];
     });
@@ -116,27 +118,26 @@ class _MyHomePageState extends State<MyHomePage> {
       }
 
       double saldoDevedor = total - entrada;
-      double valorPrincipalParcela = saldoDevedor / numParcelas;
+      double valorPrincipalParcela = (total - entrada) / numParcelas;
       List<Parcela> tempParcelas = [];
       DateTime dataAtual = dataVencimento!;
 
       for (int i = 1; i <= numParcelas; i++) {
         double jurosDaParcela = saldoDevedor * jurosMensal;
         double valorTotalParcela = valorPrincipalParcela + jurosDaParcela;
-        double novoSaldoDevedor = saldoDevedor - valorPrincipalParcela;
 
         dataAtual = DateTime(dataAtual.year, dataAtual.month + 1, dataAtual.day);
 
         tempParcelas.add(
           Parcela(
             numeroParcela: i,
-            valorParcela: valorTotalParcela,
+            valorParcela: valorPrincipalParcela,
             juros: jurosDaParcela,
-            dividaRestante: novoSaldoDevedor > 0 ? novoSaldoDevedor : 0,
+            totalParcela: valorTotalParcela,
             dataVencimento: dataAtual,
           ),
         );
-        saldoDevedor = novoSaldoDevedor;
+        saldoDevedor -= valorPrincipalParcela;
       }
 
       setState(() {
@@ -169,7 +170,6 @@ class _MyHomePageState extends State<MyHomePage> {
                         child: TextField(
                           controller: totalController,
                           decoration: const InputDecoration(labelText: "Valor Total (R\$)"),
-                          keyboardType: TextInputType.number,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -177,7 +177,6 @@ class _MyHomePageState extends State<MyHomePage> {
                         child: TextField(
                           controller: entradaController,
                           decoration: const InputDecoration(labelText: "Entrada (R\$)"),
-                          keyboardType: TextInputType.number,
                         ),
                       ),
                     ],
@@ -189,7 +188,6 @@ class _MyHomePageState extends State<MyHomePage> {
                         child: TextField(
                           controller: jurosController,
                           decoration: const InputDecoration(labelText: "Juros (%)"),
-                          keyboardType: TextInputType.number,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -197,14 +195,27 @@ class _MyHomePageState extends State<MyHomePage> {
                         child: TextField(
                           controller: parcelasController,
                           decoration: const InputDecoration(labelText: "Parcelas"),
-                          keyboardType: TextInputType.number,
                         ),
                       ),
-                      SizedBox(
-                        width: 50,
-                        child: IconButton(
-                          onPressed: _selecionarData,
-                          icon: const Icon(Icons.calendar_today),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: dataController, // Adicionado o novo TextField
+                                decoration: const InputDecoration(
+                                  labelText: "1ª Parcela",
+                                ),
+                                readOnly: true, // Impede que o usuário digite
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: _selecionarData,
+                              icon: const Icon(Icons.calendar_month),
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ],
                         ),
                       ),
                     ],
